@@ -111,7 +111,10 @@ function goldText(ctx, text, x, y, size, opts = {}) {
   ctx.save();
   ctx.font = `${opts.italic ? 'italic ' : ''}${opts.weight || 700} ${size}px ${opts.font || SERIF}`;
   ctx.textAlign = opts.align || 'center'; ctx.textBaseline = 'middle';
-  if (opts.glow) { ctx.shadowColor = opts.glow; ctx.shadowBlur = size * 0.5; }
+  if (opts.glow) {
+    if (IN_LAYER) { ctx.shadowColor = opts.glow; ctx.shadowBlur = size * 0.5; }
+    else { const a = ctx.globalAlpha; ctx.globalAlpha = a * 0.35; ctx.lineWidth = size * 0.32; ctx.lineJoin = 'round'; ctx.strokeStyle = opts.glow; ctx.strokeText(text, x, y); ctx.globalAlpha = a; }
+  }
   ctx.lineWidth = Math.max(2, size * 0.09); ctx.strokeStyle = opts.stroke || 'rgba(40,20,0,0.85)'; ctx.strokeText(text, x, y);
   ctx.shadowBlur = 0;
   ctx.fillStyle = opts.color || goldGrad(ctx, y - size / 2, y + size / 2); ctx.fillText(text, x, y);
@@ -145,7 +148,20 @@ function chipStyleFor(amount, base) {
   for (let i = 0; i < steps.length; i++) if (ratio >= steps[i]) k = i;
   return CHIP_COLS[k];
 }
+const chipCache = new Map();
 function drawChip(ctx, x, y, r, style, label, tilt = 0.45) {
+  const px = SCENE_PX || 1, key = style.c + style.e + r + '|' + (label || '') + '|' + tilt + '|' + px.toFixed(2);
+  let spr = chipCache.get(key);
+  if (!spr) {
+    if (chipCache.size > 300) chipCache.clear();
+    const pad = 6, w = r * 2 + pad * 2 + 4, h = r * tilt * 2 + r * 0.22 + pad * 2 + 6;
+    const c = mkCanvas(w * px, h * px), g = c.getContext('2d'); g.scale(px, px);
+    drawChipRaw(g, pad + r, pad + r * tilt, r, style, label, tilt);
+    spr = { c, ox: pad + r, oy: pad + r * tilt, w, h }; chipCache.set(key, spr);
+  }
+  ctx.drawImage(spr.c, x - spr.ox, y - spr.oy, spr.w, spr.h);
+}
+function drawChipRaw(ctx, x, y, r, style, label, tilt) {
   const ry = r * tilt, th = r * 0.22;
   ctx.save();
   ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(x + 2, y + th + 3, r * 1.02, ry * 1.05, 0, 0, TAU); ctx.fill();
@@ -295,7 +311,7 @@ function drawCard(ctx, card, x, y, w, flip = 1, opts = {}) {
   ctx.fillStyle = 'rgba(0,0,0,0.35)'; rr(ctx, -w / 2 * sx + 3, -h / 2 + 4, w * sx, h, w * 0.08); ctx.fill();
   ctx.scale(sx, 1);
   const k = w / pw; ctx.drawImage(img, -w / 2 - 3 * k, -h / 2 - 3 * k, img.width * k, img.height * k);
-  if (opts.glow) { ctx.shadowColor = opts.glow; ctx.shadowBlur = 18; ctx.strokeStyle = opts.glow; ctx.lineWidth = 3; rr(ctx, -w / 2, -h / 2, w, h, w * 0.08); ctx.stroke(); }
+  if (opts.glow) { ctx.strokeStyle = opts.glow; ctx.globalAlpha = 0.3; ctx.lineWidth = 12; rr(ctx, -w / 2, -h / 2, w, h, w * 0.08); ctx.stroke(); ctx.globalAlpha = 1; ctx.lineWidth = 3; ctx.stroke(); }
   if (opts.dim) { ctx.fillStyle = 'rgba(0,0,0,0.35)'; rr(ctx, -w / 2, -h / 2, w, h, w * 0.08); ctx.fill(); }
   ctx.restore();
 }
@@ -304,10 +320,11 @@ let SCENE_PX = 1;
 /* ---------- dice ---------- */
 const DIE_PIPS = { 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]], 5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]] };
 function drawDie(ctx, x, y, s, v, rot = 0, color = '#c8102e', z = 0) {
-  ctx.save();
   ctx.fillStyle = `rgba(0,0,0,${0.35 - z * 0.002})`; ctx.beginPath(); ctx.ellipse(x + 4 + z * 0.3, y + s * 0.45 + z * 0.5, s * 0.62, s * 0.22, 0, 0, TAU); ctx.fill();
-  ctx.translate(x, y - z); ctx.rotate(rot);
-  // side (thickness)
+  const S = s * 1.5, img = sprite('die' + color + v + '_' + s, S, S, (g) => { g.translate(S / 2, S / 2); drawDieBody(g, s, v, color); });
+  ctx.save(); ctx.translate(x, y - z); if (rot) ctx.rotate(rot); ctx.drawImage(img, -S / 2, -S / 2, S, S); ctx.restore();
+}
+function drawDieBody(ctx, s, v, color) {
   rr(ctx, -s / 2, -s / 2 + s * 0.12, s, s, s * 0.18); ctx.fillStyle = shade(color, -0.45); ctx.fill();
   rr(ctx, -s / 2, -s / 2, s, s, s * 0.18);
   const g = ctx.createLinearGradient(-s / 2, -s / 2, s / 2, s / 2); g.addColorStop(0, shade(color, 0.28)); g.addColorStop(0.55, color); g.addColorStop(1, shade(color, -0.25));
@@ -319,7 +336,6 @@ function drawDie(ctx, x, y, s, v, rot = 0, color = '#c8102e', z = 0) {
   }
   const hl = ctx.createRadialGradient(-s * 0.25, -s * 0.3, 0, -s * 0.2, -s * 0.2, s * 0.7); hl.addColorStop(0, 'rgba(255,255,255,0.45)'); hl.addColorStop(1, 'rgba(255,255,255,0)');
   rr(ctx, -s / 2, -s / 2, s, s, s * 0.18); ctx.fillStyle = hl; ctx.fill();
-  ctx.restore();
 }
 
 /* ---------- slot symbols (cached) ---------- */
@@ -383,13 +399,18 @@ function slotSymbol(name, size) {
 }
 
 /* ---------- marquee bulbs ---------- */
+const bulbCache = new Map();
+function bulbSprite(on, color) {
+  const px = SCENE_PX || 1, key = on + '|' + (color || '') + '|' + px.toFixed(2);
+  let c = bulbCache.get(key); if (c) return c;
+  const r = 4.2, R = r * 3.2; c = mkCanvas(R * 2 * px, R * 2 * px); const g = c.getContext('2d'); g.scale(px, px);
+  if (on) { const gr = g.createRadialGradient(R, R, 0, R, R, R); gr.addColorStop(0, color || 'rgba(255,230,140,0.9)'); gr.addColorStop(1, 'rgba(255,200,80,0)'); g.fillStyle = gr; g.beginPath(); g.arc(R, R, R, 0, TAU); g.fill(); }
+  g.beginPath(); g.arc(R, R, r, 0, TAU); g.fillStyle = on ? '#fff6c8' : '#6a5320'; g.fill();
+  bulbCache.set(key, c); return c;
+}
 function bulbRow(ctx, pts, t, phase, color) {
-  pts.forEach(([x, y], i) => {
-    const on = ((Math.floor(t * 6) + i) % 3) !== phase;
-    const r = 4.2;
-    if (on) { const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3.2); g.addColorStop(0, color || 'rgba(255,230,140,0.9)'); g.addColorStop(1, 'rgba(255,200,80,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 3.2, 0, TAU); ctx.fill(); }
-    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fillStyle = on ? '#fff6c8' : '#6a5320'; ctx.fill();
-  });
+  const onS = bulbSprite(true, color), offS = bulbSprite(false), R = 4.2 * 3.2, f = Math.floor(t * 6);
+  for (let i = 0; i < pts.length; i++) { const [x, y] = pts[i]; ctx.drawImage(((f + i) % 3) !== phase ? onS : offS, x - R, y - R, R * 2, R * 2); }
 }
 function rectBulbs(x, y, w, h, gap) {
   const pts = [];
@@ -398,6 +419,35 @@ function rectBulbs(x, y, w, h, gap) {
   for (let px = x + w - gap; px >= x; px -= gap) pts.push([px, y + h]);
   for (let py = y + h - gap; py > y; py -= gap) pts.push([x, py]);
   return pts;
+}
+
+/* ---------- small cached sprites ---------- */
+let IN_LAYER = false;
+const spriteCache = new Map();
+function sprite(key, w, h, fn) {
+  const px = SCENE_PX || 1, k = key + '|' + w + 'x' + h + '|' + px.toFixed(2);
+  let c = spriteCache.get(k); if (c) return c;
+  c = mkCanvas(w * px, h * px); const g = c.getContext('2d'); g.scale(px, px); fn(g, w, h); spriteCache.set(k, c); return c;
+}
+function kenoBallSprite(col) {
+  return sprite('kball' + col, 22, 22, (g) => { const bg = g.createRadialGradient(8, 8, 1, 11, 11, 11); bg.addColorStop(0, '#fff'); bg.addColorStop(1, col); g.beginPath(); g.arc(11, 11, 10, 0, TAU); g.fillStyle = bg; g.fill(); });
+}
+function coinSprite() {
+  return sprite('coin', 26, 26, (g) => { g.translate(13, 13); g.beginPath(); g.arc(0, 0, 12, 0, TAU); g.fillStyle = goldGrad(g, -12, 12); g.fill(); g.strokeStyle = '#8a5a12'; g.lineWidth = 1.2; g.stroke();
+    g.fillStyle = '#8a5a12'; g.font = `800 15px ${SANS}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('$', 0, 1); });
+}
+function ballSprite() {
+  return sprite('ball', 25, 25, (g) => { g.fillStyle = 'rgba(0,0,0,0.45)'; g.beginPath(); g.arc(14, 14, 9, 0, TAU); g.fill();
+    const bg = g.createRadialGradient(8, 8, 1, 11, 11, 9); bg.addColorStop(0, '#ffffff'); bg.addColorStop(0.6, '#e6e6e6'); bg.addColorStop(1, '#9a9a9a'); g.beginPath(); g.arc(11, 11, 9, 0, TAU); g.fillStyle = bg; g.fill(); });
+}
+function knobSprite() {
+  return sprite('knob', 40, 40, (g) => { const kb = g.createRadialGradient(14, 14, 2, 20, 20, 20); kb.addColorStop(0, '#ff9a9a'); kb.addColorStop(1, '#9a0010'); g.fillStyle = kb; g.beginPath(); g.arc(20, 20, 18, 0, TAU); g.fill(); });
+}
+function reelBackdrop(w, h) {
+  return sprite('reelbg', w, h, (g) => { const cyl = g.createLinearGradient(0, 0, 0, h); cyl.addColorStop(0, '#9a9a9a'); cyl.addColorStop(0.18, '#f4f4f0'); cyl.addColorStop(0.5, '#ffffff'); cyl.addColorStop(0.82, '#f4f4f0'); cyl.addColorStop(1, '#8a8a8a'); g.fillStyle = cyl; g.fillRect(0, 0, w, h); });
+}
+function reelShade(w, h) {
+  return sprite('reelshade', w, h, (g) => { const sh = g.createLinearGradient(0, 0, 0, h); sh.addColorStop(0, 'rgba(0,0,0,0.45)'); sh.addColorStop(0.2, 'rgba(0,0,0,0)'); sh.addColorStop(0.8, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,0.45)'); g.fillStyle = sh; g.fillRect(0, 0, w, h); });
 }
 
 /* ---------- particles & floating text ---------- */
@@ -414,7 +464,7 @@ function drawFX(ctx, dt, W, H) {
   FX.parts = FX.parts.filter((p) => p.age < p.life && p.y < H + 40);
   for (const p of FX.parts) {
     const a = 1 - p.age / p.life; ctx.save(); ctx.globalAlpha = a; ctx.translate(p.x, p.y);
-    if (p.k === 'coin') { ctx.scale(Math.abs(Math.cos(p.rot)) + 0.1, 1); ctx.beginPath(); ctx.arc(0, 0, p.s, 0, TAU); ctx.fillStyle = goldGrad(ctx, -p.s, p.s); ctx.fill(); ctx.strokeStyle = '#8a5a12'; ctx.lineWidth = 1; ctx.stroke(); ctx.fillStyle = '#8a5a12'; ctx.font = `800 ${p.s * 1.2}px ${SANS}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('$', 0, 1); }
+    if (p.k === 'coin') { ctx.scale(Math.abs(Math.cos(p.rot)) + 0.1, 1); ctx.drawImage(coinSprite(), -p.s, -p.s, p.s * 2, p.s * 2); }
     else { ctx.rotate(p.rot); ctx.fillStyle = '#fff6c8'; ctx.fillRect(-p.s * 0.15, -p.s, p.s * 0.3, p.s * 2); ctx.fillRect(-p.s, -p.s * 0.15, p.s * 2, p.s * 0.3); }
     ctx.restore();
   }

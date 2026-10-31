@@ -40,10 +40,10 @@ function freshGame() { return { owned: false, tier: 0, n: 0, L: 0, s: 0, c: 0, t
 function newState(keep) {
   const st = {
     v: 1, money: ECON.start, won: 0, vip: 0, vipTotal: 0, games: {}, global: { off: 0, cap: 0, carpet: 0 }, sel: null, owned: 0,
-    sound: true, last: Date.now(), created: Date.now(), stats: { rounds: 0, biggest: 0, biggestGame: '', wonAll: 0, prestiges: 0, played: 0 }, comp: 0,
+    sound: true, gfx: 'auto', last: Date.now(), created: Date.now(), stats: { rounds: 0, biggest: 0, biggestGame: '', wonAll: 0, prestiges: 0, played: 0 }, comp: 0,
   };
   GAME_ORDER.forEach((g) => { st.games[g] = freshGame(); st.games[g].type = GAME_DEFS[g].def; });
-  if (keep) { st.vip = keep.vip; st.vipTotal = keep.vipTotal; st.stats = keep.stats; st.sound = keep.sound; }
+  if (keep) { st.vip = keep.vip; st.vipTotal = keep.vipTotal; st.stats = keep.stats; st.sound = keep.sound; st.gfx = keep.gfx || 'auto'; }
   return st;
 }
 function load() {
@@ -252,7 +252,7 @@ const GLOBALS = {
 function buyGlobal(k) { const def = GLOBALS[k], l = S.global[k]; if (l >= def.max) return; const c = def.cost(l); if (S.money < c) return; S.money -= c; S.global[k]++; SND.buy(); renderShop(); save(); }
 function prestige() {
   const gain = ECON.vipFor(S.won); if (gain < 1) return;
-  const keep = { vip: S.vip + gain, vipTotal: S.vipTotal + gain, stats: Object.assign({}, S.stats, { prestiges: S.stats.prestiges + 1 }), sound: S.sound };
+  const keep = { vip: S.vip + gain, vipTotal: S.vipTotal + gain, stats: Object.assign({}, S.stats, { prestiges: S.stats.prestiges + 1 }), sound: S.sound, gfx: S.gfx };
   S = newState(keep); manualRound.active = false; save(); closeModal(); SND.bigwin();
   for (const k in SCENES) { SCENES[k].busy = false; SCENES[k].done = null; }
   pickFirstGame(true);
@@ -378,7 +378,8 @@ function updateFloor() {
 function select(gid) {
   if (S.sel === gid) return;
   if (manualRound.active && S.sel) { toast('Finish this hand first.'); return; }
-  S.sel = gid; const g = G(gid), sc = sceneFor(gid);
+  if (S.sel && SCENES[S.sel]) SCENES[S.sel].dropLayers();
+  S.sel = gid; const g = G(gid), sc = sceneFor(gid); drawAcc = 1;
   if (!sc.busy) sc.view = { amt: g.watch && g.n ? maxBet(g) : chosenBet(g), base: baseBet(g), type: g.type, straight: g.straight, spots: +g.type };
   if (gid === 'keno' && !sc.busy) sc.picks = g.picks.slice();
   renderControls(); renderShop(); updateFloor();
@@ -450,9 +451,9 @@ function toggleWatch(gid) { const g = G(gid); if (manualRound.active) { toast('F
 function updateControls() {
   const gid = S.sel; if (!gid || !ctl.info) return; const g = G(gid), watching = g.watch && g.n > 0;
   const E = edge(g, !watching), m = boost(gid, g.type, E);
-  ctl.info.innerHTML = `Player edge <b>+${(E * 100).toFixed(0)}%</b>${!watching ? ' <span class="dim">(hands-on bonus)</span>' : ''} · wins pay <b>×${m.toFixed(2)}</b>`;
-  if (ctl.watch) { const rps = g.n / interval(g); ctl.watch.innerHTML = `${g.n} dealer${g.n > 1 ? 's' : ''} · ${rps >= 10 ? rps.toFixed(0) : rps.toFixed(1)} rounds/s at ${fmt(autoBet(g) || maxBet(g))} · ≈ <b>${fmt(rateOf(gid))}/s</b>`; }
-  if (ctl.bet) ctl.bet.textContent = fmt(chosenBet(g));
+  setHTML(ctl.info, `Player edge <b>+${(E * 100).toFixed(0)}%</b>${!watching ? ' <span class="dim">(hands-on bonus)</span>' : ''} · wins pay <b>×${m.toFixed(2)}</b>`);
+  if (ctl.watch) { const rps = g.n / interval(g); setHTML(ctl.watch, `${g.n} dealer${g.n > 1 ? 's' : ''} · ${rps >= 10 ? rps.toFixed(0) : rps.toFixed(1)} rounds/s at ${fmt(autoBet(g) || maxBet(g))} · ≈ <b>${fmt(rateOf(gid))}/s</b>`); }
+  if (ctl.bet) setEl(ctl.bet, fmt(chosenBet(g)));
   if (ctl.play) ctl.play.classList.toggle('dis', sceneFor(gid).busy || manualRound.active);
 }
 
@@ -489,6 +490,10 @@ function renderCasinoShop(box) {
     const def = GLOBALS[k];
     box.append(upCard(def.name, () => S.global[k] >= def.max ? 'Fully upgraded.' : def.desc(S.global[k]), () => (S.global[k] >= def.max ? Infinity : def.cost(S.global[k])), () => buyGlobal(k), { lvl: () => S.global[k] + '/' + def.max }));
   }
+  const modes = [['auto', 'Auto'], ['smooth', 'Smooth'], ['sharp', 'Sharp']];
+  box.append(h('div', { class: 'ucard' }, h('div', { class: 'uhead' }, h('div', { class: 'utitle' }, 'Graphics')),
+    h('div', { class: 'udesc' }, 'Auto picks the sharpest picture your tablet can animate smoothly. Smooth trades detail for frame rate; Sharp is full detail.'),
+    h('div', { class: 'ubtns' }, modes.map(([k, l]) => h('button', { class: 'chipbtn' + ((S.gfx || 'auto') === k ? ' on' : ''), onclick: () => setGfx(k) }, l)))));
   const st = h('div', { class: 'tstats' }); shopEls.push({ casino: st }); box.append(st);
 }
 function renderVip(box) {
@@ -505,29 +510,33 @@ function confirmPrestige() {
 function updateShop() {
   for (const e of shopEls) {
     if (e.costFn) {
-      const c = e.costFn(); e.cost.textContent = c === Infinity ? 'MAX' : fmt(c);
+      const c = e.costFn(); setEl(e.cost, c === Infinity ? 'MAX' : fmt(c));
       e.btn.classList.toggle('dis', !(S.money >= c)); if (e.max) e.max.classList.toggle('dis', !(S.money >= c));
-      const d = e.desc(); if (e.d.textContent !== d) e.d.textContent = d; if (e.lvlFn) e.lvl.textContent = e.lvlFn();
+      setEl(e.d, e.desc()); if (e.lvlFn) setEl(e.lvl, e.lvlFn());
     } else if (e.stats) {
       const g = G(e.gid);
-      e.stats.innerHTML = `<div>Rounds played <b>${fmtNum(g.rounds)}</b></div><div>Net result <b class="${g.net >= 0 ? 'pos' : 'neg'}">${fmt(g.net)}</b></div><div>Biggest win <b>${fmt(g.best)}</b></div><div>Max bet <b>${fmt(maxBet(g))}</b></div>`;
+      setHTML(e.stats, `<div>Rounds played <b>${fmtNum(g.rounds)}</b></div><div>Net result <b class="${g.net >= 0 ? 'pos' : 'neg'}">${fmt(g.net)}</b></div><div>Biggest win <b>${fmt(g.best)}</b></div><div>Max bet <b>${fmt(maxBet(g))}</b></div>`);
     } else if (e.casino) {
-      e.casino.innerHTML = `<div>Total winnings <b>${fmt(S.stats.wonAll)}</b></div><div>Rounds played <b>${fmtNum(S.stats.rounds)}</b></div><div>Hands you played <b>${fmtNum(S.stats.played)}</b></div><div>Biggest win <b>${fmt(S.stats.biggest)}</b>${S.stats.biggestGame ? ' on ' + GAME_DEFS[S.stats.biggestGame].short : ''}</div><div>Offline cap <b>${ECON.offCap[S.global.cap]}h</b> at <b>${Math.round(ECON.offRate[S.global.off] * 100)}%</b></div>`;
+      setHTML(e.casino, `<div>Total winnings <b>${fmt(S.stats.wonAll)}</b></div><div>Rounds played <b>${fmtNum(S.stats.rounds)}</b></div><div>Hands you played <b>${fmtNum(S.stats.played)}</b></div><div>Biggest win <b>${fmt(S.stats.biggest)}</b>${S.stats.biggestGame ? ' on ' + GAME_DEFS[S.stats.biggestGame].short : ''}</div><div>Offline cap <b>${ECON.offCap[S.global.cap]}h</b> at <b>${Math.round(ECON.offRate[S.global.off] * 100)}%</b></div>`);
     } else if (e.vip) {
       const gain = ECON.vipFor(S.won), next = Math.pow(gain + 1, 3) * 1e10;
-      e.vip.innerHTML = `<div class="vipchips">★ ${S.vip}</div><div>VIP chips owned (+${S.vip}% edge)</div><hr><div>Winnings this run <b>${fmt(S.won)}</b></div><div>Cash out now for <b class="gold">${gain}</b> VIP chip${gain === 1 ? '' : 's'}</div><div class="dim">Next chip at ${fmt(next)} winnings</div>`;
+      setHTML(e.vip, `<div class="vipchips">★ ${S.vip}</div><div>VIP chips owned (+${S.vip}% edge)</div><hr><div>Winnings this run <b>${fmt(S.won)}</b></div><div>Cash out now for <b class="gold">${gain}</b> VIP chip${gain === 1 ? '' : 's'}</div><div class="dim">Next chip at ${fmt(next)} winnings</div>`);
     }
   }
 }
 
 /* ---------- top bar ---------- */
 let shownMoney = 0;
+const textMemo = {};
+function setText(sel, txt) { if (textMemo[sel] === txt) return; textMemo[sel] = txt; (textMemo['@' + sel] || (textMemo['@' + sel] = $(sel))).textContent = txt; }
+function setEl(el, txt) { if (el._t !== txt) { el._t = txt; el.textContent = txt; } }
+function setHTML(el, html) { if (el._h !== html) { el._h = html; el.innerHTML = html; } }
 function updateTop(dt) {
   shownMoney += (S.money - shownMoney) * Math.min(1, dt * 8); if (Math.abs(S.money - shownMoney) < 0.01) shownMoney = S.money;
-  $('#money').textContent = fmt(shownMoney);
-  const r = totalRate(); $('#rate').textContent = r > 0 ? `+${fmt(r)}/s` : 'Play a few rounds, then hire a dealer';
-  $('#vip').textContent = '★ ' + S.vip;
-  $('#sound').textContent = S.sound ? '🔊' : '🔈';
+  setText('#money', fmt(shownMoney));
+  const r = totalRate(); setText('#rate', r > 0 ? `+${fmt(r)}/s` : 'Play a few rounds, then hire a dealer');
+  setText('#vip', '★ ' + S.vip);
+  setText('#sound', S.sound ? '🔊' : '🔈');
 }
 
 /* ---------- first table picker ---------- */
@@ -546,11 +555,36 @@ function pickFirstGame(again) {
 /* ---------- canvas & loop ---------- */
 const cv = document.getElementById('scene'), cx = cv.getContext('2d');
 let view = { s: 1, ox: 0, oy: 0 };
+/* ---------- graphics quality ----------
+   The table is drawn at a fraction of the screen's full pixel density. 'auto' starts sharp and steps down
+   if the tablet can't keep up; 'smooth' favors frame rate; 'sharp' favors detail. */
+const GFX = { steps: [1.5, 1.2, 1.0, 0.8], level: 0, samples: [], lastCheck: 0 };
+function renderScale() {
+  const dpr = window.devicePixelRatio || 1;
+  if (S && S.gfx === 'sharp') return Math.min(dpr, 2);
+  if (S && S.gfx === 'smooth') return Math.min(dpr, 1);
+  return Math.min(dpr, GFX.steps[GFX.level]);
+}
+function clearArtCaches() {
+  [chipCache, bulbCache, spriteCache, roomCache, symCache, cardCache, cardBackCache].forEach((m) => m.clear());
+  for (const k in SCENES) SCENES[k].dropLayers(); // the two wheels rebuild themselves when the resolution changes
+}
+let lastPx = 0;
 function resize() {
-  const wrap = $('#canvas-wrap'), w = wrap.clientWidth - 12, hh = wrap.clientHeight - 12, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const wrap = $('#canvas-wrap'), w = wrap.clientWidth - 12, hh = wrap.clientHeight - 12, dpr = renderScale();
   const s = Math.min(w / SW, hh / SH); const cw = Math.floor(SW * s), ch = Math.floor(SH * s);
   cv.style.width = cw + 'px'; cv.style.height = ch + 'px'; cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
   view = { s: s * dpr, css: s }; SCENE_PX = s * dpr;
+  if (Math.abs(SCENE_PX - lastPx) > 0.01) { lastPx = SCENE_PX; clearArtCaches(); }
+  drawAcc = 1;
+}
+function setGfx(mode) { S.gfx = mode; GFX.level = 0; GFX.samples = []; resize(); save(); renderShop(); }
+/* auto mode: watch how long animated frames take and lower the resolution one step if it's struggling */
+function gfxWatch(frameMs, animating) {
+  if (S.gfx !== 'auto' || !animating || document.visibilityState === 'hidden') return;
+  GFX.samples.push(frameMs); if (GFX.samples.length < 90) return;
+  const sorted = GFX.samples.slice().sort((a, b) => a - b), med = sorted[sorted.length >> 1]; GFX.samples = [];
+  if (med > 36 && GFX.level < GFX.steps.length - 1) { GFX.level++; resize(); }
 }
 cv.addEventListener('pointerdown', (e) => {
   SND.init(); SND.resume();
@@ -578,7 +612,9 @@ function frame() {
   for (const gid of GAME_ORDER) { tickGame(gid, dt); if (gid !== S.sel && SCENES[gid].busy && SCENES[gid].update) SCENES[gid].update(); }
   drawAcc += dt;
   const sc0 = S.sel && sceneFor(S.sel), lively = sc0 && (sc0.busy || FX.parts.length || FX.texts.length || FX.banner || manualRound.active);
-  if (S.sel && (lively || drawAcc >= 1 / 24)) {
+  gfxWatch(dt * 1000, lively && !$('#modal').classList.contains('show'));
+  const minGap = lively ? (S.gfx === 'smooth' ? 1 / 32 : 0) : 1 / 20;
+  if (S.sel && drawAcc >= minGap) {
     const ddt = drawAcc; drawAcc = 0;
     const sc = sceneFor(S.sel), g = G(S.sel);
     if (!sc.busy && !manualRound.active) { sc.view.amt = g.watch && g.n ? (autoBet(g) || maxBet(g)) : chosenBet(g); sc.view.base = baseBet(g); sc.view.type = g.type; sc.view.straight = g.straight; sc.view.spots = +g.type; }
