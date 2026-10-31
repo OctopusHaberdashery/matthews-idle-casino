@@ -1,0 +1,40 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.matthew.idlecasino'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.matthew.idlecasino'
+        minSdk 24
+        targetSdk 34
+        versionCode Integer.parseInt(System.getenv('BUILD_NUMBER') ?: '1')
+        versionName "1." + (System.getenv('BUILD_NUMBER') ?: '0')
+    }
+
+    // The same key signs every build, so new versions install over old ones
+    // and the casino's save carries over.
+    signingConfigs {
+        matthew {
+            storeFile file('matthew.keystore')
+            storePassword 'idle-casino'
+            keyAlias 'matthew'
+            keyPassword 'idle-casino'
+        }
+    }
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.matthew
+        }
+        release {
+            signingConfig signingConfigs.matthew
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

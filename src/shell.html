@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Matthew's Idle Casino</title>
+<style>/*CSS*/</style>
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <div class="logo">Matthew's Idle Casino<small>★ OPEN ALL NIGHT ★</small></div>
+    <div class="bank"><div id="money">$0</div><div id="rate"></div></div>
+    <button class="topbtn" id="vip" title="VIP chips">★ 0</button>
+    <button class="topbtn" id="sound" title="Sound">🔊</button>
+  </header>
+  <aside id="floor"><div class="ftitle">Casino Floor</div><div id="floor-list"></div></aside>
+  <main id="stage"><div id="canvas-wrap"><canvas id="scene"></canvas></div><div id="controls"></div></main>
+  <aside id="shop">
+    <div class="tabs"><button class="tab on" data-tab="table">Table</button><button class="tab" data-tab="casino">Casino</button><button class="tab" data-tab="vip">VIP</button></div>
+    <div id="shop-body"></div>
+  </aside>
+</div>
+<div id="modal"><div id="modal-box" class="modal-box"></div></div>
+<div id="toast"></div>
+<script>
+/*JS*/
+document.getElementById('vip').addEventListener('click', () => { shopTab = 'vip'; renderShop(); });
+</script>
+</body>
+</html>
