@@ -151,3 +151,39 @@ button { font-family: inherit; touch-action: manipulation; }
   #shop { border-left: none; }
   .logo { font-size: 22px; } .logo small { display: none; }
 }
+
+/* ---- v3: jackpot, high rollers, goals, specials, save tools ---- */
+#canvas-wrap { position: relative; }
+.jack { border-radius: 14px; padding: 8px 10px 9px; margin-bottom: 9px; text-align: center; cursor: pointer; position: relative;
+  background: linear-gradient(180deg, #3a1060, #1c0830); border: 1.5px solid rgba(201,162,74,.55); }
+.jack:active { transform: scale(.97); }
+.jlabel { font-size: 11px; letter-spacing: 3px; font-weight: 800; color: var(--gold); }
+.jval { font-size: 22px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.jbar { height: 6px; border-radius: 3px; background: rgba(0,0,0,.5); overflow: hidden; margin: 4px 0 3px; }
+.jfill { height: 100%; width: 0; background: linear-gradient(90deg, #c08a20, #fff1b0); }
+.jsub { font-size: 12px; color: var(--dim); white-space: nowrap; }
+.jack.ready { border-color: var(--green); box-shadow: 0 0 16px rgba(107,224,138,.45); }
+.jack.ready .jsub { color: var(--green); font-weight: 800; }
+#roller { position: absolute; z-index: 6; transform: translate(-50%, -50%); width: 104px; height: 104px; border-radius: 52px; cursor: pointer; padding: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; color: #2a1206; font-size: 16px;
+  background: radial-gradient(circle at 35% 30%, #fff6c8, #f2c94c 55%, #b07d1c); border: 3px solid #fff3c4;
+  box-shadow: 0 0 0 4px rgba(242,201,76,.35), 0 8px 24px rgba(0,0,0,.6); animation: rollpulse .9s ease-in-out infinite alternate; }
+@keyframes rollpulse { from { transform: translate(-50%, -50%) scale(.94); } to { transform: translate(-50%, -50%) scale(1.06); } }
+.rhat { font-size: 2.5em; line-height: 1; } .rtxt { font-size: .69em; font-weight: 900; letter-spacing: 1px; }
+#rate.hot { color: #ffb347; }
+.slabel { font-size: 12px; letter-spacing: 2px; font-weight: 800; color: var(--gold); margin: 12px 2px 7px; }
+.ucard.sp.on { border-color: var(--gold); box-shadow: 0 0 12px rgba(242,201,76,.25); }
+.ucard.sp .ulvl { color: var(--green); font-weight: 800; }
+.ubtn.vipbuy { background: linear-gradient(180deg, #7a3ad0, #3f1a78); border-color: rgba(220,190,255,.5); }
+.goal { display: flex; align-items: center; gap: 9px; padding: 8px 10px; margin-bottom: 6px; border-radius: 12px;
+  background: linear-gradient(180deg, rgba(70,22,36,.9), rgba(34,9,16,.9)); border: 1px solid rgba(201,162,74,.3); }
+.goal.done { opacity: .55; } .gmark { font-size: 18px; color: var(--gold); width: 18px; text-align: center; } .goal.done .gmark { color: var(--green); }
+.gtext { flex: 1; min-width: 0; } .gname { font-weight: 800; font-size: 15px; } .gdesc { font-size: 12.5px; color: var(--dim); line-height: 1.25; }
+.grew { font-size: 13px; font-weight: 800; color: var(--green); white-space: nowrap; } .goal.done .grew { color: var(--dim); }
+.savebox { width: 100%; height: 120px; margin-top: 8px; border-radius: 10px; border: 1.5px solid var(--line); background: #12060a; color: var(--ink);
+  padding: 8px; font-family: monospace; font-size: 12px; user-select: text; -webkit-user-select: text; }
+.modal-btns { flex-wrap: wrap; }
+.tab { padding: 9px 2px; }
+@media (orientation: portrait) {
+  .jack { flex: none; width: 168px; margin: 0; }
+}
