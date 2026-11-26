@@ -157,6 +157,42 @@ button { font-family: inherit; touch-action: manipulation; }
   #shop { border-left: none; }
   .logo { font-size: 22px; } .logo small { display: none; }
 }
+
+/* ---- v3: jackpot, high rollers, goals, specials, save tools ---- */
+#canvas-wrap { position: relative; }
+.jack { border-radius: 14px; padding: 8px 10px 9px; margin-bottom: 9px; text-align: center; cursor: pointer; position: relative;
+  background: linear-gradient(180deg, #3a1060, #1c0830); border: 1.5px solid rgba(201,162,74,.55); }
+.jack:active { transform: scale(.97); }
+.jlabel { font-size: 11px; letter-spacing: 3px; font-weight: 800; color: var(--gold); }
+.jval { font-size: 22px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.jbar { height: 6px; border-radius: 3px; background: rgba(0,0,0,.5); overflow: hidden; margin: 4px 0 3px; }
+.jfill { height: 100%; width: 0; background: linear-gradient(90deg, #c08a20, #fff1b0); }
+.jsub { font-size: 12px; color: var(--dim); white-space: nowrap; }
+.jack.ready { border-color: var(--green); box-shadow: 0 0 16px rgba(107,224,138,.45); }
+.jack.ready .jsub { color: var(--green); font-weight: 800; }
+#roller { position: absolute; z-index: 6; transform: translate(-50%, -50%); width: 104px; height: 104px; border-radius: 52px; cursor: pointer; padding: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; color: #2a1206; font-size: 16px;
+  background: radial-gradient(circle at 35% 30%, #fff6c8, #f2c94c 55%, #b07d1c); border: 3px solid #fff3c4;
+  box-shadow: 0 0 0 4px rgba(242,201,76,.35), 0 8px 24px rgba(0,0,0,.6); animation: rollpulse .9s ease-in-out infinite alternate; }
+@keyframes rollpulse { from { transform: translate(-50%, -50%) scale(.94); } to { transform: translate(-50%, -50%) scale(1.06); } }
+.rhat { font-size: 2.5em; line-height: 1; } .rtxt { font-size: .69em; font-weight: 900; letter-spacing: 1px; }
+#rate.hot { color: #ffb347; }
+.slabel { font-size: 12px; letter-spacing: 2px; font-weight: 800; color: var(--gold); margin: 12px 2px 7px; }
+.ucard.sp.on { border-color: var(--gold); box-shadow: 0 0 12px rgba(242,201,76,.25); }
+.ucard.sp .ulvl { color: var(--green); font-weight: 800; }
+.ubtn.vipbuy { background: linear-gradient(180deg, #7a3ad0, #3f1a78); border-color: rgba(220,190,255,.5); }
+.goal { display: flex; align-items: center; gap: 9px; padding: 8px 10px; margin-bottom: 6px; border-radius: 12px;
+  background: linear-gradient(180deg, rgba(70,22,36,.9), rgba(34,9,16,.9)); border: 1px solid rgba(201,162,74,.3); }
+.goal.done { opacity: .55; } .gmark { font-size: 18px; color: var(--gold); width: 18px; text-align: center; } .goal.done .gmark { color: var(--green); }
+.gtext { flex: 1; min-width: 0; } .gname { font-weight: 800; font-size: 15px; } .gdesc { font-size: 12.5px; color: var(--dim); line-height: 1.25; }
+.grew { font-size: 13px; font-weight: 800; color: var(--green); white-space: nowrap; } .goal.done .grew { color: var(--dim); }
+.savebox { width: 100%; height: 120px; margin-top: 8px; border-radius: 10px; border: 1.5px solid var(--line); background: #12060a; color: var(--ink);
+  padding: 8px; font-family: monospace; font-size: 12px; user-select: text; -webkit-user-select: text; }
+.modal-btns { flex-wrap: wrap; }
+.tab { padding: 9px 2px; }
+@media (orientation: portrait) {
+  .jack { flex: none; width: 168px; margin: 0; }
+}
 </style>
 </head>
 <body>
@@ -170,7 +206,7 @@ button { font-family: inherit; touch-action: manipulation; }
   <aside id="floor"><div class="ftitle">Casino Floor</div><div id="floor-list"></div></aside>
   <main id="stage"><div id="canvas-wrap"><canvas id="scene"></canvas></div><div id="controls"></div></main>
   <aside id="shop">
-    <div class="tabs"><button class="tab on" data-tab="table">Table</button><button class="tab" data-tab="casino">Casino</button><button class="tab" data-tab="vip">VIP</button></div>
+    <div class="tabs"><button class="tab on" data-tab="table">Table</button><button class="tab" data-tab="casino">Casino</button><button class="tab" data-tab="goals">Goals</button><button class="tab" data-tab="vip">VIP</button></div>
     <div id="shop-body"></div>
   </aside>
 </div>
@@ -1968,7 +2004,7 @@ const ECON = {
   start: 50, edge0: 0.12, manualBonus: 0.13, charmEdge: 0.03, charmMax: 12, vipEdge: 0.01, carpetEdge: 0.01, carpetMax: 15,
   B: (t) => 10 * Math.pow(4, t),
   unlock: (owned) => (owned === 0 ? 0 : 1000 * Math.pow(50, owned - 1)),
-  dealerCost: (B, n) => (n === 0 ? 10 * B : 6 * B * Math.pow(1.15, n - 1)),
+  dealerCost: (B, n) => (n === 0 ? 7.5 * B : 6 * B * Math.pow(1.15, n - 1)),
   limitCost: (B, L) => 50 * B * Math.pow(12, L),
   speedCost: (B, s) => 15 * B * Math.pow(2.5, s), speedMax: 10, interval: (s) => 2.5 * Math.pow(0.8, s),
   charmCost: (B, c) => 30 * B * Math.pow(3.5, c),
@@ -2001,39 +2037,54 @@ function fmtTime(sec) {
 
 /* ---------- state ---------- */
 let S = null;
-function freshGame() { return { owned: false, tier: 0, n: 0, L: 0, s: 0, c: 0, type: null, step: 0, watch: true, straight: 17, picks: [], acc: 0, rounds: 0, net: 0, best: 0 }; }
+function freshGame() { return { owned: false, tier: 0, n: 0, L: 0, s: 0, c: 0, type: null, step: 0, watch: true, straight: 17, picks: [], acc: 0, rounds: 0, net: 0, best: 0, sp: [] }; }
 function newState(keep) {
   const st = {
     v: 1, money: ECON.start, won: 0, vip: 0, vipTotal: 0, games: {}, global: { off: 0, cap: 0, carpet: 0 }, sel: null, owned: 0,
-    sound: true, gfx: 'auto', last: Date.now(), created: Date.now(), stats: { rounds: 0, biggest: 0, biggestGame: '', wonAll: 0, prestiges: 0, played: 0 }, comp: 0,
+    sound: true, gfx: 'auto', last: Date.now(), created: Date.now(), comp: 0,
+    stats: { rounds: 0, biggest: 0, biggestGame: '', wonAll: 0, prestiges: 0, played: 0, rollers: 0, jackpots: 0, maxMult: 0 },
+    ach: {}, shop: {}, flags: {}, jackT: 0, buff: null, roll: { next: 0 },
   };
   GAME_ORDER.forEach((g) => { st.games[g] = freshGame(); st.games[g].type = GAME_DEFS[g].def; });
-  if (keep) { st.vip = keep.vip; st.vipTotal = keep.vipTotal; st.stats = keep.stats; st.sound = keep.sound; st.gfx = keep.gfx || 'auto'; }
+  if (keep) { st.vip = keep.vip; st.vipTotal = keep.vipTotal; st.stats = keep.stats; st.sound = keep.sound; st.gfx = keep.gfx || 'auto'; st.ach = keep.ach || {}; st.shop = keep.shop || {}; st.flags = keep.flags || {}; }
+  st.money = ECON.start * Math.pow(10, st.shop.seed || 0);
   return st;
 }
 function load() {
   try {
     const raw = localStorage.getItem(SAVE_KEY); if (!raw) return null;
     const st = JSON.parse(raw); if (!st || st.v !== 1) return null;
-    const base = newState(); for (const k in base) if (st[k] === undefined) st[k] = base[k];
+    const base = newState(); for (const k in base) if (st[k] === undefined || st[k] === null && k !== 'buff' && k !== 'sel') st[k] = base[k];
+    st.stats = Object.assign({}, base.stats, st.stats); if (!st.roll || typeof st.roll !== 'object') st.roll = { next: 0 };
     GAME_ORDER.forEach((g) => { st.games[g] = Object.assign(freshGame(), { type: GAME_DEFS[g].def }, st.games[g] || {}); });
     return st;
   } catch (e) { return null; }
 }
 let PENDING = 0; // stakes on the felt right now (added back when saving, so a closed app never loses a bet)
-function save() { try { S.last = Date.now(); const m = S.money; S.money += PENDING; localStorage.setItem(SAVE_KEY, JSON.stringify(S)); S.money = m; } catch (e) { } }
+function save() { if (NO_SAVE) return; try { S.last = Date.now(); const m = S.money; S.money += PENDING; localStorage.setItem(SAVE_KEY, JSON.stringify(S)); S.money = m; } catch (e) { } }
 
 /* ---------- economy helpers ---------- */
 const G = (gid) => S.games[gid];
 const baseBet = (g) => ECON.B(g.tier);
 const milesHit = (g) => ECON.miles.filter((m) => g.n >= m).length;
 const nextMile = (g) => ECON.miles.find((m) => g.n < m);
-const maxBet = (g) => baseBet(g) * Math.pow(2, g.L + milesHit(g));
-const interval = (g) => ECON.interval(g.s);
-function edge(g, manual) { return ECON.edge0 + ECON.charmEdge * g.c + ECON.vipEdge * S.vip + ECON.carpetEdge * S.global.carpet + (manual ? ECON.manualBonus : 0); }
+const gidOf = (g) => GAME_ORDER.find((k) => S.games[k] === g);
+const maxBet = (g) => baseBet(g) * Math.pow(2, g.L + milesHit(g)) * mods(gidOf(g)).bet;
+const intervalAt = (g, s) => ECON.interval(s) / (mods(gidOf(g)).speed * (1 + 0.08 * shopLvl('fast')));
+const interval = (g) => intervalAt(g, g.s);
+/* Player edge: base + charms + every VIP chip ever earned + Lucky Carpet + goals + this table's House Special (+ hands-on bonus) */
+function edge(g, manual) {
+  return ECON.edge0 + ECON.charmEdge * g.c + ECON.vipEdge * S.vipTotal + ECON.carpetEdge * S.global.carpet + achEdge() + mods(gidOf(g)).edge
+    + (manual ? ECON.manualBonus + 0.03 * shopLvl('touch') : 0);
+}
 function wl(gid, type) { return (RTP[gid] && RTP[gid][type]) || [0.5, 0.5]; }
 function boost(gid, type, E) { const [W, L] = wl(gid, type); return (L + E) / W; }
-function rateOf(gid) { const g = G(gid); if (!g.owned || !g.n) return 0; return g.n * maxBet(g) * edge(g, false) / interval(g); }
+/* Average profit per round, per $1 bet: wins pay (L+E)/W, boosted by win bonuses; some losses may be refunded. */
+function evFrac(gid, type, manual, noBuff) {
+  const g = G(gid), E = edge(g, manual), L = wl(gid, type)[1], M = mods(gid), wm = M.win * (noBuff ? 1 : buffWin());
+  return E * wm + L * (wm - 1) + M.refund * L;
+}
+function rateOf(gid, noBuff) { const g = G(gid); if (!g.owned || !g.n) return 0; return g.n * maxBet(g) * evFrac(gid, g.type, false, noBuff) / interval(g); }
 const totalRate = () => GAME_ORDER.reduce((a, gid) => a + rateOf(gid), 0);
 function stakeAfford(bet, units) { return S.money >= bet * units - 1e-9; }
 function autoBet(g) {
@@ -2042,7 +2093,10 @@ function autoBet(g) {
   return stakeAfford(b, 1) ? b : 0;
 }
 function chosenBet(g) { const B = baseBet(g); return Math.max(B, maxBet(g) / Math.pow(2, g.step)); }
-function profitOf(gid, type, res, bet, manual) { const g = G(gid); const m = boost(gid, type, edge(g, manual)); return bet * (res.win * m - res.loss); }
+function profitOf(gid, type, res, bet, manual) {
+  const g = G(gid), M = mods(gid), m = boost(gid, type, edge(g, manual));
+  return bet * (res.win * m * M.win * buffWin() - res.loss * (1 - M.refund));
+}
 function roundCtx(gid, bet) {
   const g = G(gid); return { straight: g.straight, picks: null, canAfford: (extra) => stakeAfford(bet, 1 + extra) };
 }
@@ -2052,6 +2106,7 @@ function credit(gid, profit, bet, grossWin, manual) {
   if (grossWin > 0) { S.won += grossWin; S.stats.wonAll += grossWin; }
   if (profit > g.best) g.best = profit;
   if (profit > S.stats.biggest) { S.stats.biggest = profit; S.stats.biggestGame = gid; }
+  if (bet > 0 && profit / bet > (S.stats.maxMult || 0)) S.stats.maxMult = profit / bet;
 }
 
 /* ---------- scenes ---------- */
@@ -2103,7 +2158,8 @@ function playManual(gid) {
   if (gid === 'videopoker') return vpManualDeal(gid, bet);
   const ctx = roundCtx(gid, bet);
   if (gid === 'keno') ctx.picks = g.picks.length === +g.type ? g.picks.slice() : null;
-  const res = autoRound(gid, g.type, ctx);
+  let res = autoRound(gid, g.type, ctx);
+  if (luckyStart()) res = luckyResult(gid, g.type, ctx, res);
   if (gid === 'keno' && ctx.picks) res.show.picks = ctx.picks;
   S.money -= bet; PENDING += bet; S.stats.played++;
   sc.view = { amt: bet, base: baseBet(g), type: g.type, straight: g.straight, spots: +g.type };
@@ -2111,12 +2167,14 @@ function playManual(gid) {
   sc.start(res, 1, () => {
     manualRound.active = false;
     const profit = profitOf(gid, g.type, res, bet, true); S.money += bet; PENDING -= bet; credit(gid, profit, bet, profit > 0 ? profit : 0);
+    if (gid === 'roulette' && g.type === 'num' && profit > 0) S.flags.straight = 1;
     celebrate(gid, profit, bet, S.sel === gid); renderControls();
   });
 }
 /* blackjack by hand */
 function bjManualDeal(gid, bet) {
   const g = G(gid), sc = sceneFor(gid);
+  if (luckyStart()) luckyShoe(shoes.blackjack);
   S.money -= bet; PENDING += bet; S.stats.played++;
   const st = bjDeal(shoes.blackjack);
   manualRound.active = true; manualRound.bj = { st, bet, stake: 1 }; sc.reset(); sc.manual = true; sc.gap = 0.32;
@@ -2137,16 +2195,17 @@ function bjManualAct(act) {
 }
 function bjManualSettle(gid) {
   const m = manualRound.bj, sc = sceneFor(gid); const res = bjSettle(m.st);
+  if (res.res.some((r) => r === 1.5)) S.flags.bjnat = 1;
   const profit = profitOf(gid, 'hand', res, m.bet, true); S.money += m.bet * m.stake; PENDING -= m.bet * m.stake; credit(gid, profit, m.bet, profit > 0 ? profit : 0);
   sc.showResult(res); celebrate(gid, profit, m.bet, S.sel === gid);
   manualRound.active = false; manualRound.bj = null; renderControls();
 }
 /* video poker by hand */
 function vpManualDeal(gid, bet) {
-  const g = G(gid), sc = sceneFor(gid); S.money -= bet; PENDING += bet; S.stats.played++;
-  const deck = vpDeck(), hand = deck.splice(0, 5);
+  const g = G(gid), sc = sceneFor(gid), lucky = luckyStart(); S.money -= bet; PENDING += bet; S.stats.played++;
+  const deck = lucky ? luckyPokerDeck(vpDeck()) : vpDeck(), hand = deck.splice(0, 5);
   manualRound.active = true; manualRound.vp = { deck, hand, bet };
-  sc.view = { amt: bet, base: baseBet(g) }; sc.deal(hand); renderControls();
+  sc.view = { amt: bet, base: baseBet(g) }; sc.deal(hand); if (lucky) sc.holds = vpStrategy(hand); renderControls();
 }
 function vpManualDraw() {
   const gid = 'videopoker', sc = sceneFor(gid), m = manualRound.vp; if (!m) return;
@@ -2179,15 +2238,15 @@ function tickGame(gid, dt) {
   }
   const rest = k - done;
   if (rest > 0) {
-    const E = edge(g, false), [W] = wl(gid, g.type), m = boost(gid, g.type, E);
-    const p = rest * bet * E; S.money += p; g.net += p; g.rounds += rest; S.stats.rounds += rest; S.won += rest * bet * W * m; S.stats.wonAll += rest * bet * W * m;
+    const E = edge(g, false), L = wl(gid, g.type)[1], gross = rest * bet * (L + E) * mods(gid).win * buffWin();
+    const p = rest * bet * evFrac(gid, g.type, false); S.money += p; g.net += p; g.rounds += rest; S.stats.rounds += rest; S.won += gross; S.stats.wonAll += gross;
   }
 }
 
 /* ---------- purchases ---------- */
 function costOf(gid, what) {
   const g = G(gid), B = baseBet(g);
-  if (what === 'n') return ECON.dealerCost(B, g.n);
+  if (what === 'n') return ECON.dealerCost(B, g.n) * mods(gid).cost;
   if (what === 'L') return ECON.limitCost(B, g.L);
   if (what === 's') return g.s >= ECON.speedMax ? Infinity : ECON.speedCost(B, g.s);
   if (what === 'c') return g.c >= ECON.charmMax ? Infinity : ECON.charmCost(B, g.c);
@@ -2196,16 +2255,17 @@ function buy(gid, what, many) {
   const g = G(gid); let bought = 0;
   do { const c = costOf(gid, what); if (!(S.money >= c)) break; S.money -= c; g[what]++; bought++; } while (many && bought < 1000);
   if (bought) {
-    SND.buy(); if (what === 'n' && g.n === 1) { g.watch = true; toast(`Your first dealer is on ${GAME_DEFS[gid].short}! They'll keep playing while you're away.`); }
+    SND.buy(); if (what === 'n' && g.n === bought && !g.hired) { g.hired = 1; g.watch = true; toast(`Your first dealer is on ${GAME_DEFS[gid].short}! They'll keep playing while you're away.`); }
     if (what === 'n' && ECON.miles.includes(g.n)) toast(`${g.n} dealers on ${GAME_DEFS[gid].short} — High-roller bonus: table limit doubled!`);
     renderShop(); renderControls(); save();
   }
 }
-function unlockCost() { return ECON.unlock(S.owned); }
+function unlockCost() { return ECON.unlock(S.owned) * (1 - 0.15 * shopLvl('felt')); }
 function unlockGame(gid, free) {
   const g = G(gid); if (g.owned) return;
   const c = free ? 0 : unlockCost(); if (S.money < c) return;
-  S.money -= c; g.owned = true; g.tier = S.owned; S.owned++; g.watch = false; g.type = GAME_DEFS[gid].def;
+  S.money -= c; g.owned = true; g.tier = S.owned; S.owned++; g.type = GAME_DEFS[gid].def;
+  g.n = 3 * shopLvl('staff'); g.watch = g.n > 0; g.hired = g.n > 0 ? 1 : 0;
   SND.buy(); if (!free) { burstCoins(500, 300, 50, true); toast(`${GAME_DEFS[gid].name} is open! Minimum bet ${fmt(baseBet(g))}.`); }
   select(gid); save();
 }
@@ -2217,25 +2277,28 @@ const GLOBALS = {
 function buyGlobal(k) { const def = GLOBALS[k], l = S.global[k]; if (l >= def.max) return; const c = def.cost(l); if (S.money < c) return; S.money -= c; S.global[k]++; SND.buy(); renderShop(); save(); }
 function prestige() {
   const gain = ECON.vipFor(S.won); if (gain < 1) return;
-  const keep = { vip: S.vip + gain, vipTotal: S.vipTotal + gain, stats: Object.assign({}, S.stats, { prestiges: S.stats.prestiges + 1 }), sound: S.sound, gfx: S.gfx };
-  S = newState(keep); manualRound.active = false; save(); closeModal(); SND.bigwin();
+  const keep = { vip: S.vip + gain, vipTotal: S.vipTotal + gain, stats: Object.assign({}, S.stats, { prestiges: S.stats.prestiges + 1 }), sound: S.sound, gfx: S.gfx, ach: S.ach, shop: S.shop, flags: S.flags };
+  S = newState(keep); manualRound.active = false; removeRoller(); save(); closeModal(); SND.bigwin();
   for (const k in SCENES) { SCENES[k].busy = false; SCENES[k].done = null; }
   pickFirstGame(true);
 }
 
 /* ---------- offline ---------- */
 function offlineGain(sec) {
-  const capped = Math.min(sec, ECON.offCap[S.global.cap] * 3600);
-  return { amount: totalRate() * capped * ECON.offRate[S.global.off], capped, sec };
+  const capped = Math.min(sec, offCapNow() * 3600);
+  const rate = GAME_ORDER.reduce((a, gid) => a + rateOf(gid, true) * mods(gid).off, 0);
+  return { amount: rate * capped * offRateNow(), capped, sec };
 }
 function applyOffline(sec, quietly) {
   if (sec < 5) return;
   const o = offlineGain(sec); if (o.amount <= 0) return;
-  S.money += o.amount; S.won += o.amount;
+  S.money += o.amount; S.won += o.amount; S.stats.wonAll += o.amount;
+  S.jackT = Math.min(JACK_CAP, S.jackT + sec * jackSpeed()); if (sec >= 600) S.flags.away = 1;
+  const jackNote = S.jackT >= jackNeed() ? `<p>The jackpot grew to <b>${fmt(jackValue())}</b> while you were out. Tap it to hit it.</p>` : '';
   if (quietly) { toast(`Dealers earned ${fmt(o.amount)} while you were away`); return; }
   showModal(`<div class="wb"><div class="wb-title">Welcome back, Matthew!</div>
-    <p>Your dealers kept the tables busy for <b>${fmtTime(o.capped)}</b>${o.sec > o.capped ? ` (they clock out after ${ECON.offCap[S.global.cap]}h)` : ''}.</p>
-    <div class="wb-amt">+${fmt(o.amount)}</div><p class="dim">Offline tables earn ${Math.round(ECON.offRate[S.global.off] * 100)}% of their usual rate.</p></div>`, [['Collect', closeModal, 'gold']]);
+    <p>Your dealers kept the tables busy for <b>${fmtTime(o.capped)}</b>${o.sec > o.capped ? ` (they clock out after ${offCapNow()}h)` : ''}.</p>
+    <div class="wb-amt">+${fmt(o.amount)}</div>${jackNote}<p class="dim">Offline tables earn ${Math.round(offRateNow() * 100)}% of their usual rate.</p></div>`, [['Collect', closeModal, 'gold']]);
   SND.init(); burstCoins(500, 300, 40, true);
 }
 
@@ -2429,6 +2492,7 @@ function renderShop() {
   document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.dataset.tab === shopTab));
   if (shopTab === 'table') return renderTableShop(box);
   if (shopTab === 'casino') return renderCasinoShop(box);
+  if (shopTab === 'goals') return renderGoals(box);
   renderVip(box);
 }
 function upCard(title, desc, costFn, onBuy, opts = {}) {
@@ -2445,8 +2509,16 @@ function renderTableShop(box) {
     () => g.n ? `Each dealer plays a round every ${interval(g).toFixed(2)}s. ${nextMile(g) ? `At ${nextMile(g)} dealers the table limit doubles.` : ''}` : 'A dealer plays this table for you — even when the app is closed.',
     () => costOf(gid, 'n'), () => buy(gid, 'n'), { max: () => buy(gid, 'n', true), lvl: () => g.n + ' hired', cls: g.n ? '' : 'hero' }));
   box.append(upCard('Raise the table limit', () => `Bets ${fmt(maxBet(g))} → ${fmt(maxBet(g) * 2)}. Bigger bets, bigger wins.`, () => costOf(gid, 'L'), () => buy(gid, 'L'), { lvl: () => 'Lv ' + g.L }));
-  box.append(upCard('Faster dealers', () => g.s >= ECON.speedMax ? 'Dealers are as fast as they get.' : `Round every ${interval(g).toFixed(2)}s → ${ECON.interval(g.s + 1).toFixed(2)}s`, () => costOf(gid, 's'), () => buy(gid, 's'), { lvl: () => g.s + '/' + ECON.speedMax }));
+  box.append(upCard('Faster dealers', () => g.s >= ECON.speedMax ? 'Dealers are as fast as they get.' : `Round every ${interval(g).toFixed(2)}s → ${intervalAt(g, g.s + 1).toFixed(2)}s`, () => costOf(gid, 's'), () => buy(gid, 's'), { lvl: () => g.s + '/' + ECON.speedMax }));
   box.append(upCard('Lucky charm', () => g.c >= ECON.charmMax ? 'This table is as lucky as it gets.' : `Player edge +${(edge(g) * 100).toFixed(0)}% → +${((edge(g) + ECON.charmEdge) * 100).toFixed(0)}%`, () => costOf(gid, 'c'), () => buy(gid, 'c'), { lvl: () => g.c + '/' + ECON.charmMax }));
+  // House Specials: two per table, pick one
+  const both = shopLvl('key') > 0, spc = specialCost(g);
+  box.append(h('div', { class: 'slabel' }, both ? 'HOUSE SPECIALS' : 'HOUSE SPECIAL · PICK ONE'));
+  SPECIALS[gid].forEach((sp) => {
+    const on = g.sp.includes(sp.k), btn = h('button', { class: 'btn ubtn' + (on ? ' dis' : ''), onclick: () => chooseSpecial(gid, sp.k) }, on ? 'Running' : (g.sp.length && !both ? 'Switch · ' : '') + fmt(spc));
+    box.append(h('div', { class: 'ucard sp' + (on ? ' on' : '') }, h('div', { class: 'uhead' }, h('div', { class: 'utitle' }, sp.name), h('div', { class: 'ulvl' }, on ? '✓ ON' : '')), h('div', { class: 'udesc' }, sp.desc), h('div', { class: 'ubtns' }, btn)));
+    if (!on) shopEls.push({ tick: () => btn.classList.toggle('dis', S.money < spc) });
+  });
   const st = h('div', { class: 'tstats' }); shopEls.push({ stats: st, gid }); box.append(st);
 }
 function renderCasinoShop(box) {
@@ -2459,22 +2531,34 @@ function renderCasinoShop(box) {
   box.append(h('div', { class: 'ucard' }, h('div', { class: 'uhead' }, h('div', { class: 'utitle' }, 'Graphics')),
     h('div', { class: 'udesc' }, 'Auto picks the sharpest picture your tablet can animate smoothly. Smooth trades detail for frame rate; Sharp is full detail.'),
     h('div', { class: 'ubtns' }, modes.map(([k, l]) => h('button', { class: 'chipbtn' + ((S.gfx || 'auto') === k ? ' on' : ''), onclick: () => setGfx(k) }, l)))));
+  const saveBtns = [h('button', { class: 'chipbtn', onclick: exportSave }, 'Export'), h('button', { class: 'chipbtn', onclick: importSave }, 'Import'), h('button', { class: 'chipbtn', onclick: resetSave }, 'Start over')];
+  box.append(h('div', { class: 'ucard' }, h('div', { class: 'uhead' }, h('div', { class: 'utitle' }, 'Your save')),
+    h('div', { class: 'udesc' }, 'The casino saves itself in this browser. Export a copy now and then so clearing your browser can’t lose it, or to move to another device.'),
+    h('div', { class: 'ubtns' }, saveBtns)));
   const st = h('div', { class: 'tstats' }); shopEls.push({ casino: st }); box.append(st);
 }
 function renderVip(box) {
   box.append(h('div', { class: 'shead' }, h('div', { class: 'stitle' }, '★ High Roller Club'), h('div', { class: 'ssub' }, 'Cash out and start a bigger casino')));
   const info = h('div', { class: 'vipbox' }); shopEls.push({ vip: info }); box.append(info);
-  box.append(h('button', { class: 'btn big gold wide', onclick: confirmPrestige }, 'Cash out & join the club'));
-  box.append(h('p', { class: 'dim small' }, 'Cashing out resets your bankroll, tables and casino upgrades. You keep your VIP chips forever, and each one adds +1% player edge to every table.'));
+  box.append(h('button', { class: 'btn big gold wide', onclick: confirmPrestige }, 'Cash out for VIP chips'));
+  box.append(h('div', { class: 'slabel' }, 'CLUB PERKS · PAID IN VIP CHIPS'));
+  VIPSHOP.forEach((def) => {
+    const l = shopLvl(def.k), maxed = l >= def.max, c = maxed ? Infinity : def.cost[l];
+    const btn = h('button', { class: 'btn ubtn vipbuy' + (maxed || S.vip < c ? ' dis' : ''), onclick: () => buyVip(def.k) }, maxed ? 'MAX' : '★ ' + c);
+    box.append(h('div', { class: 'ucard' }, h('div', { class: 'uhead' }, h('div', { class: 'utitle' }, def.n), h('div', { class: 'ulvl' }, l + '/' + def.max)),
+      h('div', { class: 'udesc' }, maxed ? 'Fully upgraded.' : def.d(l)), h('div', { class: 'ubtns' }, btn)));
+  });
+  box.append(h('p', { class: 'dim small' }, 'Cashing out resets your bankroll, tables and casino upgrades. You keep your VIP chips, club perks and goals. Every chip you’ve ever earned adds +1% player edge, and you can also spend chips on club perks.'));
 }
 function confirmPrestige() {
   const gain = ECON.vipFor(S.won);
   if (gain < 1) { toast(`You need ${fmt(1e10)} in total winnings for your first VIP chip.`); return; }
-  showModal(`<div class="wb"><div class="wb-title">Cash out?</div><p>You'll earn <b>${gain} VIP chip${gain > 1 ? 's' : ''}</b> (+${gain}% edge on every table, forever).</p><p>Your bankroll, tables and upgrades reset, and you pick a new first table.</p></div>`, [['Keep playing', closeModal], ['Cash out', prestige, 'gold']]);
+  showModal(`<div class="wb"><div class="wb-title">Cash out?</div><p>You'll earn <b>${gain} VIP chip${gain > 1 ? 's' : ''}</b>: +${gain}% edge on every table forever, and ${gain} to spend on club perks.</p><p>Your bankroll, tables and upgrades reset, and you pick a new first table. Goals and club perks stay.</p></div>`, [['Keep playing', closeModal], ['Cash out', prestige, 'gold']]);
 }
 function updateShop() {
   for (const e of shopEls) {
-    if (e.costFn) {
+    if (e.tick) e.tick();
+    else if (e.costFn) {
       const c = e.costFn(); setEl(e.cost, c === Infinity ? 'MAX' : fmt(c));
       e.btn.classList.toggle('dis', !(S.money >= c)); if (e.max) e.max.classList.toggle('dis', !(S.money >= c));
       setEl(e.d, e.desc()); if (e.lvlFn) setEl(e.lvl, e.lvlFn());
@@ -2482,10 +2566,10 @@ function updateShop() {
       const g = G(e.gid);
       setHTML(e.stats, `<div>Rounds played <b>${fmtNum(g.rounds)}</b></div><div>Net result <b class="${g.net >= 0 ? 'pos' : 'neg'}">${fmt(g.net)}</b></div><div>Biggest win <b>${fmt(g.best)}</b></div><div>Max bet <b>${fmt(maxBet(g))}</b></div>`);
     } else if (e.casino) {
-      setHTML(e.casino, `<div>Total winnings <b>${fmt(S.stats.wonAll)}</b></div><div>Rounds played <b>${fmtNum(S.stats.rounds)}</b></div><div>Hands you played <b>${fmtNum(S.stats.played)}</b></div><div>Biggest win <b>${fmt(S.stats.biggest)}</b>${S.stats.biggestGame ? ' on ' + GAME_DEFS[S.stats.biggestGame].short : ''}</div><div>Offline cap <b>${ECON.offCap[S.global.cap]}h</b> at <b>${Math.round(ECON.offRate[S.global.off] * 100)}%</b></div>`);
+      setHTML(e.casino, `<div>Total winnings <b>${fmt(S.stats.wonAll)}</b></div><div>Rounds played <b>${fmtNum(S.stats.rounds)}</b></div><div>Hands you played <b>${fmtNum(S.stats.played)}</b></div><div>Biggest win <b>${fmt(S.stats.biggest)}</b>${S.stats.biggestGame ? ' on ' + GAME_DEFS[S.stats.biggestGame].short : ''}</div><div>High rollers greeted <b>${fmtNum(S.stats.rollers || 0)}</b> · jackpots <b>${fmtNum(S.stats.jackpots || 0)}</b></div><div>Offline cap <b>${offCapNow()}h</b> at <b>${Math.round(offRateNow() * 100)}%</b></div>`);
     } else if (e.vip) {
       const gain = ECON.vipFor(S.won), next = Math.pow(gain + 1, 3) * 1e10;
-      setHTML(e.vip, `<div class="vipchips">★ ${S.vip}</div><div>VIP chips owned (+${S.vip}% edge)</div><hr><div>Winnings this run <b>${fmt(S.won)}</b></div><div>Cash out now for <b class="gold">${gain}</b> VIP chip${gain === 1 ? '' : 's'}</div><div class="dim">Next chip at ${fmt(next)} winnings</div>`);
+      setHTML(e.vip, `<div class="vipchips">★ ${S.vip}</div><div>VIP chips to spend</div><div class="dim">${S.vipTotal} earned in total: +${S.vipTotal}% edge on every table</div><hr><div>Winnings this run <b>${fmt(S.won)}</b></div><div>Cash out now for <b class="gold">${gain}</b> VIP chip${gain === 1 ? '' : 's'}</div><div class="dim">Next chip at ${fmt(next)} winnings</div>`);
     }
   }
 }
@@ -2499,7 +2583,8 @@ function setHTML(el, html) { if (el._h !== html) { el._h = html; el.innerHTML = 
 function updateTop(dt) {
   shownMoney += (S.money - shownMoney) * Math.min(1, dt * 8); if (Math.abs(S.money - shownMoney) < 0.01) shownMoney = S.money;
   setText('#money', fmt(shownMoney));
-  const r = totalRate(); setText('#rate', r > 0 ? `+${fmt(r)}/s` : 'Play a few rounds, then hire a dealer');
+  const r = totalRate(); setText('#rate', r > 0 ? `+${fmt(r)}/s` + (buffOn() ? ` 🔥 wins +30% · ${Math.ceil((S.buff.until - Date.now()) / 1000)}s` : '') : 'Play a few rounds, then hire a dealer');
+  $('#rate').classList.toggle('hot', buffOn());
   setText('#vip', '★ ' + S.vip);
   setText('#sound', S.sound ? '🔊' : '🔈');
 }
@@ -2509,10 +2594,10 @@ function pickFirstGame(again) {
   const grid = h('div', { class: 'pickgrid' });
   GAME_ORDER.forEach((gid) => {
     const c = h('canvas', { width: 120, height: 120 }); drawIcon(c, gid);
-    grid.append(h('button', { class: 'pick', onclick: () => { closeModal(); SND.init(); SND.resume(); unlockGame(gid, true); toast(`Welcome to the floor! Bets here start at ${fmt(10)}. Hire your first dealer for ${fmt(100)}.`); } }, c, h('div', { class: 'pname' }, GAME_DEFS[gid].short), h('div', { class: 'ptag' }, GAME_DEFS[gid].tag)));
+    grid.append(h('button', { class: 'pick', onclick: () => { closeModal(); SND.init(); SND.resume(); unlockGame(gid, true); toast(again ? 'A new casino. Your club perks and goals came with you.' : `Welcome to the floor! Play a few hands, then hire your first dealer for ${fmt(75)}.`); maybeAskRating(); } }, c, h('div', { class: 'pname' }, GAME_DEFS[gid].short), h('div', { class: 'ptag' }, GAME_DEFS[gid].tag)));
   });
   const body = h('div', {}, h('div', { class: 'logo-big' }, "Matthew's Idle Casino"),
-    h('p', { class: 'center' }, again ? `Welcome to the High Roller Club — you hold ${S.vip} VIP chip${S.vip === 1 ? '' : 's'}. Pick your first table.` : 'Your casino opens tonight. Pick your first table — it’s on the house. Every table here is rigged in your favor.'),
+    h('p', { class: 'center' }, again ? `Welcome to the High Roller Club. You have ${S.vip} VIP chip${S.vip === 1 ? '' : 's'} to spend on club perks (VIP tab). Pick your first table.` : 'Your casino opens tonight. Pick your first table — it’s on the house. Every table here is rigged in your favor.'),
     grid);
   showModal(body, [], 'wide');
 }
@@ -2575,6 +2660,7 @@ function frame() {
   if (catchUp()) dt = 0.016;
   dt = Math.min(dt, 0.25); NOW = t;
   for (const gid of GAME_ORDER) { tickGame(gid, dt); if (gid !== S.sel && SCENES[gid].busy && SCENES[gid].update) SCENES[gid].update(); }
+  tickExtras(dt);
   drawAcc += dt;
   const sc0 = S.sel && sceneFor(S.sel), lively = sc0 && (sc0.busy || FX.parts.length || FX.texts.length || FX.banner || manualRound.active);
   gfxWatch(dt * 1000, lively && !$('#modal').classList.contains('show'));
@@ -2602,7 +2688,7 @@ function boot() {
   buildTextures();
   S = load(); const fresh = !S; if (!S) S = newState();
   SND.on = S.sound;
-  buildFloor();
+  buildFloor(); buildJack();
   document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => { shopTab = t.dataset.tab; SND.click(); renderShop(); }));
   $('#sound').addEventListener('click', () => { S.sound = !S.sound; SND.on = S.sound; SND.init(); SND.resume(); if (S.sound) SND.chip(); save(); });
   $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal' && !$('#modal-box').classList.contains('wide')) closeModal(); });
@@ -2623,6 +2709,304 @@ function boot() {
 }
 window.__appPause = save;
 window.addEventListener('load', boot);
+
+/* ===== House Specials, VIP club perks, goals, high rollers, the casino jackpot, save tools ===== */
+const ITCH_URL = ''; // the game's itch.io page, e.g. https://name.itch.io/the-lucky-carpet (used by the "rate it" prompt)
+const ON_WEB = !window.AndroidApp && /^https?:/.test(location.protocol);
+
+const totalDealers = () => GAME_ORDER.reduce((a, k) => a + (G(k).owned ? G(k).n : 0), 0);
+const baseRate = () => GAME_ORDER.reduce((a, gid) => a + rateOf(gid, true), 0);   // income without a hot streak
+const lowestBet = () => Math.min(...GAME_ORDER.filter((k) => G(k).owned).map((k) => baseBet(G(k))), Infinity);
+const shopLvl = (k) => (S.shop && S.shop[k]) || 0;
+
+/* ---------- House Specials: each table has two; a table runs one (both with the Master Key) ---------- */
+const SPECIALS = {
+  slots: [
+    { k: 'a', name: 'Loose Reels', desc: '+6% player edge on the slots.', fx: (o) => { o.edge += 0.06; } },
+    { k: 'b', name: 'Progressive Link', desc: 'The casino jackpot fills twice as fast.', fx: () => { } },
+  ],
+  roulette: [
+    { k: 'a', name: 'La Partage', desc: '12% of every losing bet comes back.', fx: (o) => { o.refund += 0.12; } },
+    { k: 'b', name: 'Second Wheel', desc: 'Roulette rounds run 40% faster.', fx: (o) => { o.speed *= 1.4; } },
+  ],
+  blackjack: [
+    { k: 'a', name: 'Card Counters', desc: '+1% edge for every 10 dealers here (up to +15%).', fx: (o, g) => { o.edge += Math.min(0.15, Math.floor(g.n / 10) * 0.01); } },
+    { k: 'b', name: 'Shuffle Machine', desc: 'Blackjack hands run 40% faster.', fx: (o) => { o.speed *= 1.4; } },
+  ],
+  craps: [
+    { k: 'a', name: 'Free Odds', desc: 'Bets on this table are 50% bigger.', fx: (o) => { o.bet *= 1.5; } },
+    { k: 'b', name: 'Hot Shooter', desc: 'Every craps win pays 10% more.', fx: (o) => { o.win *= 1.10; } },
+  ],
+  baccarat: [
+    { k: 'a', name: 'No Commission', desc: 'Every baccarat win pays 9% more.', fx: (o) => { o.win *= 1.09; } },
+    { k: 'b', name: 'Whale Room', desc: 'High rollers tip three times as much.', fx: () => { } },
+  ],
+  videopoker: [
+    { k: 'a', name: 'Full-Pay Machines', desc: '+6% player edge on video poker.', fx: (o) => { o.edge += 0.06; } },
+    { k: 'b', name: 'Bank of Machines', desc: 'Dealers here cost 35% less.', fx: (o) => { o.cost *= 0.65; } },
+  ],
+  keno: [
+    { k: 'a', name: 'Night Runners', desc: 'Keno earns double while you’re away.', fx: (o) => { o.off *= 2; } },
+    { k: 'b', name: 'Multiplier Ball', desc: 'Every keno win pays 10% more.', fx: (o) => { o.win *= 1.10; } },
+  ],
+  bigsix: [
+    { k: 'a', name: 'Crowd Pleaser', desc: '+2% player edge on every other table.', fx: () => { } },
+    { k: 'b', name: 'Showstopper', desc: 'Hot streaks last twice as long.', fx: () => { } },
+  ],
+  sicbo: [
+    { k: 'a', name: 'Dragon’s Luck', desc: '+1% edge here for every table you have open.', fx: (o) => { o.edge += 0.01 * S.owned; } },
+    { k: 'b', name: 'Fast Shaker', desc: 'Sic Bo rounds run 40% faster.', fx: (o) => { o.speed *= 1.4; } },
+  ],
+};
+const hasSp = (gid, k) => G(gid).owned && (G(gid).sp || []).includes(k);
+const specialCost = (g) => 150 * baseBet(g);
+function mods(gid) {
+  const g = G(gid), o = { edge: 0, win: 1, refund: 0, speed: 1, bet: 1, cost: 1, off: 1 };
+  for (const k of g.sp || []) { const sp = SPECIALS[gid].find((x) => x.k === k); if (sp) sp.fx(o, g); }
+  if (gid !== 'bigsix' && hasSp('bigsix', 'a')) o.edge += 0.02;
+  return o;
+}
+function chooseSpecial(gid, k, confirmed) {
+  const g = G(gid), c = specialCost(g), sp = SPECIALS[gid].find((x) => x.k === k);
+  if (g.sp.includes(k)) return;
+  if (S.money < c) { toast(`${sp.name} costs ${fmt(c)}. You have ${fmt(S.money)}.`); return; }
+  const both = shopLvl('key') > 0;
+  if (g.sp.length && !both && !confirmed) {
+    const cur = SPECIALS[gid].find((x) => x.k === g.sp[0]);
+    showModal(`<div class="wb"><div class="wb-title">Switch special?</div><p>A table runs one House Special at a time. Replace <b>${cur.name}</b> with <b>${sp.name}</b> for ${fmt(c)}?</p></div>`,
+      [['Keep ' + cur.name, closeModal], ['Switch', () => { closeModal(); chooseSpecial(gid, k, true); }, 'gold']]);
+    return;
+  }
+  S.money -= c; if (both) g.sp.push(k); else g.sp = [k];
+  SND.buy(); toast(`${sp.name} is now running on ${GAME_DEFS[gid].short}.`); renderShop(); renderControls(); save();
+}
+
+/* ---------- VIP club perks: bought with VIP chips, kept forever ---------- */
+const VIPSHOP = [
+  { k: 'seed', n: 'Seed Money', max: 5, cost: [1, 2, 3, 5, 8], d: (l) => `Start every casino with ${fmt(ECON.start * Math.pow(10, l + 1))} instead of ${fmt(ECON.start * Math.pow(10, l))}.` },
+  { k: 'staff', n: 'Loyal Staff', max: 5, cost: [1, 2, 4, 6, 9], d: (l) => `Every table opens with ${3 * (l + 1)} dealers already hired.` },
+  { k: 'touch', n: 'Golden Touch', max: 5, cost: [1, 2, 3, 5, 8], d: (l) => `Playing by hand gets +${3 * (l + 1)}% more edge (now +${3 * l}%).` },
+  { k: 'fast', n: 'Fast Hands', max: 5, cost: [2, 3, 5, 8, 12], d: (l) => `Every dealer works ${8 * (l + 1)}% faster (now ${8 * l}%).` },
+  { k: 'magnet', n: 'High Roller Magnet', max: 4, cost: [1, 2, 4, 7], d: (l) => `High rollers visit ${25 * (l + 1)}% more often.` },
+  { k: 'owl', n: 'Night Owl', max: 4, cost: [2, 3, 5, 8], d: (l) => `+${25 * (l + 1)}% earnings while away, and dealers stay ${4 * (l + 1)}h longer.` },
+  { k: 'felt', n: 'Friends in Construction', max: 4, cost: [1, 2, 4, 7], d: (l) => `New tables cost ${15 * (l + 1)}% less.` },
+  { k: 'key', n: 'Master Key', max: 1, cost: [12], d: () => 'Every table can run both of its House Specials at once.' },
+];
+function buyVip(k) {
+  const def = VIPSHOP.find((x) => x.k === k), l = shopLvl(k); if (l >= def.max) return;
+  const c = def.cost[l];
+  if (S.vip < c) { toast('Not enough VIP chips. Cash out to earn more.'); return; }
+  S.vip -= c; S.shop[k] = l + 1;
+  if (k === 'seed') S.money += ECON.start * (Math.pow(10, l + 1) - Math.pow(10, l));   // applies to this casino too
+  if (k === 'staff') GAME_ORDER.forEach((gid) => { const g = G(gid); if (g.owned) g.n += 3; });
+  SND.buy(); toast(`${def.n} upgraded.`); renderShop(); renderControls(); save();
+}
+const offRateNow = () => ECON.offRate[S.global.off] + 0.25 * shopLvl('owl');
+const offCapNow = () => ECON.offCap[S.global.cap] + 4 * shopLvl('owl');
+
+/* ---------- Goals: each one pays cash and +0.5% player edge forever ---------- */
+const ACH_EDGE = 0.005;
+const maxOnTable = () => Math.max(0, ...GAME_ORDER.map((k) => (G(k).owned ? G(k).n : 0)));
+const ACH = [
+  { id: 'hand1', n: 'Beginner’s Luck', d: 'Play your first hand.', cash: 25, t: () => S.stats.played >= 1 },
+  { id: 'hire1', n: 'Now Hiring', d: 'Hire your first dealer.', cash: 40, t: () => totalDealers() >= 1 },
+  { id: 'hands10', n: 'Hands On', d: 'Play 10 hands yourself.', cash: 60, t: () => S.stats.played >= 10 },
+  { id: 'd5', n: 'Small Crew', d: 'Have 5 dealers working.', cash: 100, t: () => totalDealers() >= 5 },
+  { id: 'roll1', n: 'Right This Way', d: 'Greet a high roller.', cash: 100, t: () => S.stats.rollers >= 1 },
+  { id: 'jack1', n: 'Jackpot!', d: 'Hit the casino jackpot.', cash: 150, t: () => S.stats.jackpots >= 1 },
+  { id: 'sp1', n: 'House Special', d: 'Pick a House Special for a table.', cash: 250, t: () => GAME_ORDER.some((k) => (G(k).sp || []).length) },
+  { id: 't2', n: 'Expansion', d: 'Open a second table.', cash: 500, t: () => S.owned >= 2 },
+  { id: 'd25', n: 'Full Pit', d: 'Put 25 dealers on one table.', cash: 0, t: () => maxOnTable() >= 25 },
+  { id: 'w6', n: 'Millionaire', d: 'Win $1M in total.', cash: 0, t: () => S.stats.wonAll >= 1e6 },
+  { id: 't3', n: 'Three’s Company', d: 'Open three tables.', cash: 0, t: () => S.owned >= 3 },
+  { id: 'hands100', n: 'Regular', d: 'Play 100 hands yourself.', cash: 0, t: () => S.stats.played >= 100 },
+  { id: 'roll10', n: 'Gracious Host', d: 'Greet 10 high rollers.', cash: 0, t: () => S.stats.rollers >= 10 },
+  { id: 'd100', n: 'Staff Party', d: 'Have 100 dealers working.', cash: 0, t: () => totalDealers() >= 100 },
+  { id: 'big50', n: 'Long Shot', d: 'Win 30 times your bet in one round.', cash: 0, t: () => (S.stats.maxMult || 0) >= 30 },
+  { id: 'bjnat', n: 'Natural', d: 'Get dealt a blackjack playing by hand.', cash: 0, t: () => !!S.flags.bjnat },
+  { id: 'straight', n: 'Straight Up', d: 'Hit a single roulette number playing by hand.', cash: 0, t: () => !!S.flags.straight },
+  { id: 'away', n: 'Welcome Back', d: 'Come back after 10 minutes away.', cash: 0, t: () => !!S.flags.away },
+  { id: 'carpet', n: 'The Lucky Carpet', d: 'Lay the Lucky Carpet 5 times.', cash: 0, t: () => S.global.carpet >= 5 },
+  { id: 'speed', n: 'Lightning Hands', d: 'Max out dealer speed on a table.', cash: 0, t: () => GAME_ORDER.some((k) => G(k).s >= ECON.speedMax) },
+  { id: 't5', n: 'High Street', d: 'Open five tables.', cash: 0, t: () => S.owned >= 5 },
+  { id: 'w9', n: 'Billionaire', d: 'Win $1B in total.', cash: 0, t: () => S.stats.wonAll >= 1e9 },
+  { id: 'jack10', n: 'Jackpot Regular', d: 'Hit the jackpot 10 times.', cash: 0, t: () => S.stats.jackpots >= 10 },
+  { id: 'grand', n: 'The Big One', d: 'Hit a Grand jackpot.', cash: 0, t: () => !!S.flags.grand },
+  { id: 'd500', n: 'Small Army', d: 'Have 500 dealers working.', cash: 0, t: () => totalDealers() >= 500 },
+  { id: 'roll50', n: 'Legendary Host', d: 'Greet 50 high rollers.', cash: 0, t: () => S.stats.rollers >= 50 },
+  { id: 'p1', n: 'Member of the Club', d: 'Cash out for the first time.', cash: 0, t: () => S.stats.prestiges >= 1 },
+  { id: 'shop5', n: 'Perks of the Job', d: 'Buy 5 club perk levels.', cash: 0, t: () => VIPSHOP.reduce((a, x) => a + shopLvl(x.k), 0) >= 5 },
+  { id: 'sp9', n: 'Full Menu', d: 'Run a House Special on all nine tables.', cash: 0, t: () => GAME_ORDER.every((k) => (G(k).sp || []).length) },
+  { id: 't9', n: 'The Whole Floor', d: 'Open all nine tables.', cash: 0, t: () => S.owned >= 9 },
+  { id: 'w12', n: 'Trillionaire', d: 'Win $1T in total.', cash: 0, t: () => S.stats.wonAll >= 1e12 },
+  { id: 'hands1k', n: 'Card Shark', d: 'Play 1,000 hands yourself.', cash: 0, t: () => S.stats.played >= 1000 },
+  { id: 'd2000', n: 'Payroll', d: 'Have 2,000 dealers working.', cash: 0, t: () => totalDealers() >= 2000 },
+  { id: 'p3', n: 'Serial Founder', d: 'Cash out 3 times.', cash: 0, t: () => S.stats.prestiges >= 3 },
+  { id: 'w15', n: 'Quadrillionaire', d: 'Win $1Qa in total.', cash: 0, t: () => S.stats.wonAll >= 1e15 },
+  { id: 'p10', n: 'Casino Royalty', d: 'Cash out 10 times.', cash: 0, t: () => S.stats.prestiges >= 10 },
+];
+const achCount = () => ACH.reduce((a, x) => a + (S.ach[x.id] ? 1 : 0), 0);
+const achEdge = () => achCount() * ACH_EDGE;
+const achCash = (a) => Math.max(a.cash, 45 * baseRate());   // early goals pay a fixed amount; later ones pay 45 seconds of income
+function checkAch() {
+  for (const a of ACH) if (!S.ach[a.id] && a.t()) {       // one at a time, so each gets its moment
+    const cash = achCash(a); S.ach[a.id] = 1; S.money += cash;
+    toast(`🏆 ${a.n}: +${fmt(cash)} and +0.5% edge`); SND.win(); burstCoins(500, 300, 18, false);
+    if (shopTab === 'goals') renderShop(); renderControls();
+    return;
+  }
+}
+function renderGoals(box) {
+  const n = achCount();
+  box.append(h('div', { class: 'shead' }, h('div', { class: 'stitle' }, '🏆 Goals'),
+    h('div', { class: 'ssub' }, `${n} of ${ACH.length} done · +${(n * 0.5).toFixed(1)}% player edge on every table`)));
+  const row = (a, done) => h('div', { class: 'goal' + (done ? ' done' : '') }, h('div', { class: 'gmark' }, done ? '✓' : '○'),
+    h('div', { class: 'gtext' }, h('div', { class: 'gname' }, a.n), h('div', { class: 'gdesc' }, a.d)),
+    h('div', { class: 'grew' }, done ? 'Done' : '+' + fmt(achCash(a))));
+  ACH.filter((a) => !S.ach[a.id]).forEach((a) => box.append(row(a, false)));
+  ACH.filter((a) => S.ach[a.id]).forEach((a) => box.append(row(a, true)));
+  box.append(h('p', { class: 'dim small' }, 'Every goal pays cash and adds +0.5% player edge forever. Goals survive cashing out.'));
+}
+
+/* ---------- High rollers: tap them when they walk in ---------- */
+const HOT_WIN = 1.3;
+const buffOn = () => !!(S.buff && Date.now() < S.buff.until);
+const buffWin = () => (buffOn() ? HOT_WIN : 1);
+const ROLLER = { el: null, until: 0 };
+const rollerGap = () => (75 + Math.random() * 75) * 1000 / (1 + 0.25 * shopLvl('magnet'));
+function removeRoller() { if (ROLLER.el) ROLLER.el.remove(); ROLLER.el = null; }
+function tickRoller() {
+  const now = Date.now();
+  if (ROLLER.el) { if (now > ROLLER.until) { removeRoller(); S.roll.next = now + rollerGap(); } return; }
+  if (!S.roll.next) { if (totalDealers() > 0) S.roll.next = now + 30000; return; }   // first visit: 30s after the first dealer
+  if (now < S.roll.next || document.visibilityState === 'hidden' || $('#modal').classList.contains('show') || !S.sel) return;
+  const el = h('button', { id: 'roller', onclick: tapRoller }, h('span', { class: 'rhat' }, '🎩'), h('span', { class: 'rtxt' }, 'HIGH ROLLER'));
+  el.style.left = (14 + Math.random() * 58) + '%'; el.style.top = (22 + Math.random() * 50) + '%';
+  const size = Math.round(clamp(cv.clientWidth * 0.15, 54, 104)); el.style.width = el.style.height = size + 'px'; el.style.fontSize = (size / 104) + 'em';
+  $('#canvas-wrap').append(el); ROLLER.el = el; ROLLER.until = now + 14000;
+  SND.tone(880, 0.12, 'triangle', 0.14); SND.tone(1320, 0.2, 'triangle', 0.14, 0.1);
+}
+function tapRoller() {
+  if (!ROLLER.el) return; SND.init(); SND.resume();
+  removeRoller(); S.stats.rollers = (S.stats.rollers || 0) + 1; S.roll.next = Date.now() + rollerGap();
+  if (Math.random() < 0.55) {
+    const amt = Math.max(10 * lowestBet(), 45 * baseRate()) * (hasSp('baccarat', 'b') ? 3 : 1);
+    S.money += amt; S.won += amt; S.stats.wonAll += amt;
+    FX.banner = { title: 'HIGH ROLLER!', sub: 'Tipped you +' + fmt(amt), age: 0, life: 2.4 }; burstCoins(500, 300, 50, true);
+  } else {
+    const dur = 30 * (hasSp('bigsix', 'b') ? 2 : 1); S.buff = { until: Date.now() + dur * 1000 };
+    FX.banner = { title: 'HOT STREAK!', sub: `Every win pays +30% for ${dur} seconds`, age: 0, life: 2.4 };
+  }
+  SND.bigwin(); vibrate(60); drawAcc = 1; save();
+}
+
+/* ---------- The casino jackpot: fills in real time, also while you're away ---------- */
+const JACK_CAP = 8 * 3600, JACK_SHARE = 0.2;
+const jackSpeed = () => (hasSp('slots', 'b') ? 2 : 1);
+const jackNeed = () => (S.stats.jackpots ? 600 : 180);             // the first one comes quickly
+const jackValue = () => S.jackT * JACK_SHARE * baseRate();
+const JK = {};
+function buildJack() {
+  JK.val = h('div', { class: 'jval' }, '$0'); JK.sub = h('div', { class: 'jsub' }); JK.bar = h('div', { class: 'jfill' });
+  JK.el = h('div', { class: 'jack', onclick: claimJackpot }, h('div', { class: 'jlabel' }, '★ JACKPOT ★'), JK.val, h('div', { class: 'jbar' }, JK.bar), JK.sub);
+  $('#floor-list').prepend(JK.el);
+}
+function updateJack() {
+  if (!JK.el) return;
+  const need = jackNeed(), ready = S.jackT >= need && baseRate() > 0, full = S.jackT >= JACK_CAP;
+  setEl(JK.val, fmt(jackValue())); JK.el.classList.toggle('ready', ready);
+  const pct = Math.round(100 * (ready ? S.jackT / JACK_CAP : S.jackT / need)); if (JK.pct !== pct) { JK.pct = pct; JK.bar.style.width = Math.min(100, pct) + '%'; }
+  setEl(JK.sub, !totalDealers() ? 'Hire a dealer to start it' : full ? 'FULL. Tap to hit it!' : ready ? 'Tap to hit it! Still growing' : 'Ready in ' + fmtTime((need - S.jackT) / jackSpeed()));
+}
+function claimJackpot() {
+  SND.init(); SND.resume();
+  if (!totalDealers()) { toast('The jackpot starts filling once you hire a dealer.'); return; }
+  const need = jackNeed();
+  if (S.jackT < need) { toast(`The jackpot is still building. Ready in ${fmtTime((need - S.jackT) / jackSpeed())}. It keeps growing while you're away.`); return; }
+  const r = Math.random(), tier = r < 0.05 ? ['GRAND JACKPOT!', 5] : r < 0.30 ? ['MAJOR JACKPOT!', 2] : ['MINI JACKPOT!', 1];
+  const pay = jackValue() * tier[1];
+  S.money += pay; S.won += pay; S.stats.wonAll += pay; S.jackT = 0; S.stats.jackpots = (S.stats.jackpots || 0) + 1; if (tier[1] === 5) S.flags.grand = 1;
+  FX.banner = { title: tier[0], sub: '+' + fmt(pay), age: 0, life: 3.2 }; burstCoins(500, 300, tier[1] > 1 ? 120 : 60, true);
+  SND.bigwin(); vibrate([60, 40, 120]); drawAcc = 1; updateJack(); save();
+}
+
+/* ---------- Beginner's luck: the first three hands of a brand-new casino go the player's way ---------- */
+const luckyStart = () => S.stats.played < 3 && !S.stats.prestiges && S.stats.rounds < 50;
+function luckyResult(gid, type, ctx, res) {
+  for (let i = 0; i < 400; i++) { const net = res.win - res.loss; if (net >= 0.5 && net <= 12) return res; res = autoRound(gid, type, ctx); }
+  return res;                                              // long-shot bets stay honest
+}
+function luckyShoe(shoe) {                                 // a twenty against a dealer who busts (never a natural: that goal should be earned)
+  const c = (r, s) => ({ r, s });
+  const deal = [[c(13, 0), c(6, 2), c(12, 1), c(10, 3), c(11, 0)], [c(1, 1), c(5, 0), c(9, 2), c(10, 1), c(9, 3)], [c(10, 2), c(4, 3), c(11, 1), c(13, 2), c(12, 0)]][S.stats.played % 3];
+  for (let i = deal.length - 1; i >= 0; i--) shoe.c.push(deal[i]);   // order drawn: player, dealer, player, dealer, dealer's hit
+}
+function luckyPokerDeck(deck) {                            // three of a kind, already held
+  const r = deck[0].r, trips = deck.filter((c) => c.r === r).slice(0, 3), rest = deck.filter((c) => !trips.includes(c));
+  const kick = rest.filter((c) => c.r !== r).slice(0, 2);
+  return [...trips, ...kick, ...rest.filter((c) => !kick.includes(c))];
+}
+
+/* ---------- Save tools ---------- */
+let NO_SAVE = false;
+function saveString() { const m = S.money; S.money += PENDING; const s = JSON.stringify(S); S.money = m; return 'LC1:' + btoa(unescape(encodeURIComponent(s))); }
+function parseSave(text) {
+  text = (text || '').trim(); if (!text) return null;
+  try {
+    const json = text.startsWith('LC1:') ? decodeURIComponent(escape(atob(text.slice(4).replace(/\s+/g, '')))) : text;
+    const st = JSON.parse(json);
+    return st && st.v === 1 && st.games && typeof st.money === 'number' ? json : null;
+  } catch (e) { return null; }
+}
+function copyText(text, area) {
+  const ok = () => toast('Copied. Paste it somewhere safe.');
+  const old = () => { try { area.focus(); area.select(); document.execCommand('copy') ? ok() : toast('Select the text and copy it.'); } catch (e) { toast('Select the text and copy it.'); } };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, old); else old();
+}
+function exportSave() {
+  save(); const text = saveString();
+  const area = h('textarea', { class: 'savebox', readonly: '' }); area.value = text;
+  const dl = () => { try { const a = h('a', { href: URL.createObjectURL(new Blob([text], { type: 'text/plain' })), download: 'lucky-carpet-save.txt' }); document.body.append(a); a.click(); a.remove(); } catch (e) { toast('Could not make a file. Copy the text instead.'); } };
+  const btns = [['Close', closeModal], ['Copy', () => copyText(text, area), 'gold']]; if (!window.AndroidApp) btns.splice(1, 0, ['Save as file', dl]);
+  showModal(h('div', { class: 'wb' }, h('div', { class: 'wb-title' }, 'Your save'), h('p', {}, 'Keep this text somewhere safe. Paste it into Import to bring your casino back, on this device or another one.'), area), btns);
+  setTimeout(() => area.select(), 50);
+}
+function importSave() {
+  const area = h('textarea', { class: 'savebox', placeholder: 'Paste your save here' });
+  const file = h('input', { type: 'file', accept: '.txt,text/plain', style: 'display:none', onchange: (e) => { const f = e.target.files[0]; if (f) f.text().then((t) => { area.value = t; }); } });
+  const go = () => {
+    const json = parseSave(area.value); if (!json) { toast('That doesn’t look like a save from this game.'); return; }
+    NO_SAVE = true; try { localStorage.setItem(SAVE_KEY, json); } catch (e) { NO_SAVE = false; toast('This browser wouldn’t store the save.'); return; }
+    location.reload();
+  };
+  showModal(h('div', { class: 'wb' }, h('div', { class: 'wb-title' }, 'Import a save'), h('p', {}, 'This replaces the casino on this device.'), area, file),
+    [['Cancel', closeModal], ['Choose a file', () => file.click()], ['Load it', go, 'gold']]);
+}
+function resetSave() {
+  showModal('<div class="wb"><div class="wb-title">Start over?</div><p>This erases this casino, including VIP chips and goals. Export a save first if you might want it back.</p></div>',
+    [['Keep my casino', closeModal, 'gold'], ['Erase everything', () => { NO_SAVE = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) { } location.reload(); }]]);
+}
+
+/* ---------- "Rate it" prompt: once, after the first cash-out, on the web only ---------- */
+function maybeAskRating() {
+  if (!ON_WEB || S.flags.rateAsked || !S.stats.prestiges) return;
+  S.flags.rateAsked = 1; save();
+  setTimeout(() => {
+    const where = ITCH_URL ? '' : ' Use “Rate this game” at the top of the game’s itch.io page.';
+    showModal(`<div class="wb"><div class="wb-title">Enjoying the casino?</div><p>You just cashed out for the first time. If you’re having fun, a quick rating on itch.io helps other players find the game.${where}</p></div>`,
+      ITCH_URL ? [['Maybe later', closeModal], ['Rate it', () => { closeModal(); window.open(ITCH_URL.replace(/\/$/, '') + '/rate', '_blank', 'noopener'); }, 'gold']] : [['OK', closeModal, 'gold']]);
+  }, 1800);
+}
+
+/* ---------- per-frame upkeep ---------- */
+let exT = 0, achT = 0;
+function tickExtras(dt) {
+  if (totalDealers() > 0) S.jackT = Math.min(JACK_CAP, S.jackT + dt * jackSpeed());
+  exT += dt; if (exT < 0.3) return; exT = 0;
+  if (S.buff && Date.now() > S.buff.until) S.buff = null;
+  tickRoller(); updateJack();
+  achT += 0.3; if (achT >= 1.2) { achT = 0; checkAch(); }
+}
 
 document.getElementById('vip').addEventListener('click', () => { shopTab = 'vip'; renderShop(); });
 </script>
